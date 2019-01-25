@@ -1,11 +1,14 @@
 package com.freetsinghua.tool.util;
 
-import com.alibaba.fastjson.JSON;
-
 import lombok.Getter;
 import lombok.Setter;
 
-/** FTP的配置类 */
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+/**
+ * FTP的配置类
+ */
 @Setter
 @Getter
 final class FtpConfig {
@@ -16,11 +19,11 @@ final class FtpConfig {
 
     public void setPassword(String password) {
         // 解码
-        this.password = SafeUtils.decode(password);
+        this.password = new String(Base64.getDecoder().decode(password), StandardCharsets.UTF_8);
     }
 
     @Override
     public String toString() {
-        return JSON.toJSONString(this);
+        return JsonUtils.writeObjectAsString(this);
     }
 }

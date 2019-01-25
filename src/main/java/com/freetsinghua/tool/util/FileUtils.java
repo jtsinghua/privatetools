@@ -1,7 +1,7 @@
 package com.freetsinghua.tool.util;
 
+import com.freetsinghua.tool.anotation.Nullable;
 import com.freetsinghua.tool.core.io.ClassPathResource;
-import com.sun.istack.internal.Nullable;
 
 import java.io.*;
 
@@ -15,7 +15,6 @@ public class FileUtils {
      *
      * @param path the file path
      * @return if file exist, return the content of this file
-     * @throws IOException if file does not exist
      */
     public static String readFileToString(String path) {
 

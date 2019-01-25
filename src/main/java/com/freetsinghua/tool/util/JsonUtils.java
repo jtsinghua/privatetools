@@ -5,7 +5,8 @@ import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.istack.internal.Nullable;
+import com.freetsinghua.tool.anotation.Nullable;
+
 /**
  * json工具
  *

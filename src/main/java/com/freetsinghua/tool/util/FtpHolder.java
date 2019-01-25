@@ -1,19 +1,16 @@
 package com.freetsinghua.tool.util;
 
+import com.freetsinghua.tool.core.io.ClassPathResource;
+import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPReply;
+
 import java.io.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-
-import com.freetsinghua.tool.core.io.ClassPathResource;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
-import org.springframework.core.io.ClassPathResource;
-
-import com.google.common.collect.Lists;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * FTP客户端
@@ -27,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 public final class FtpHolder {
     private FtpConfig ftpConfig = new FtpConfig();
     private FTPClient ftpClient = null;
-    // 线程安全
     private static ThreadLocal<FtpHolder> ftpHolderThreadLocal = new ThreadLocal<>();
 
     private FtpHolder() {
@@ -50,6 +46,7 @@ public final class FtpHolder {
         FtpHolder ftpHolder = ftpHolderThreadLocal.get();
         if (Objects.isNull(ftpHolder)) {
             ftpHolder = new FtpHolder();
+            ftpHolderThreadLocal.remove();
             ftpHolderThreadLocal.set(ftpHolder);
         }
         return ftpHolder;
@@ -90,8 +87,8 @@ public final class FtpHolder {
      * 上传文件到服务器
      *
      * @param serverPath 要将文件上传到具体的哪个目录
-     * @param fileName 文件名
-     * @param localPath 本地文件的绝对路径
+     * @param fileName   文件名
+     * @param localPath  本地文件的绝对路径
      * @return 返回true，表示上传成功；false，表示上传失败
      */
     public boolean uploadFileToFtpServer(String serverPath, String fileName, String localPath) {
@@ -130,11 +127,11 @@ public final class FtpHolder {
      * 从FTP服务器下载文件
      *
      * @param serverPath 在远程服务器上，文件所在的目录
-     * @param fileName 所要下载的文件的名称
-     * @param localPath 本地保存路径
-     * @throws IllegalAccessException 若是指定的目录不存在，则抛出异常
-     * @throws FileNotFoundException 若是指定要下载的文件不存在，则抛出异常
+     * @param fileName   所要下载的文件的名称
+     * @param localPath  本地保存路径
      * @return 返回操作结果
+     * @throws IllegalAccessException 若是指定的目录不存在，则抛出异常
+     * @throws FileNotFoundException  若是指定要下载的文件不存在，则抛出异常
      */
     public boolean downloadFileFromFtpServer(String serverPath, String fileName, String localPath)
             throws IllegalAccessException, IOException {
@@ -174,7 +171,7 @@ public final class FtpHolder {
      * 从FTP服务器上删除文件
      *
      * @param serverPath 要删除文件所在的目录
-     * @param fileName 要删除的文件的名称
+     * @param fileName   要删除的文件的名称
      * @return 返回操作结果
      */
     public boolean deleteFileFromFtpServer(String serverPath, String fileName)
@@ -210,7 +207,6 @@ public final class FtpHolder {
                 while (!directories.isEmpty()) {
                     // 工作目录切换到父目录
                     ftpClient.changeToParentDirectory();
-                    log.info("当前工作目录: [{}]", ftpClient.printWorkingDirectory());
                     FTPFile[] listDirectories = ftpClient.listDirectories();
                     for (FTPFile ftpFile : listDirectories) {
                         if (directories.size() < 1) {
@@ -303,9 +299,10 @@ public final class FtpHolder {
 
     public static void main(String[] args) throws IOException, IllegalAccessException {
         // download();
-        // upload();
-        // delete();
+//         upload();
+         delete();
     }
+
     @SuppressWarnings("unused")
     private static void delete() throws IOException, IllegalAccessException {
         boolean deleteFileFromFtpServer =
