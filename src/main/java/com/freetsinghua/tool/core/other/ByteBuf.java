@@ -1739,9 +1739,9 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
     public abstract boolean equals(Object obj);
 
     /**
-     * Compares the content of the specified buffer to the content of this buffer. Comparison is
-     * performed in the same manner with the string comparison functions of various languages such
-     * as {@code strcmp}, {@code memcmp} and {@link String#compareTo(String)}.
+     * 将指定缓冲区的内容与此缓冲区的内容进行比较。
+     *
+     * <p>使用各种语言的字符串比较函数（例如{@code strcmp}，{@code memcmp} 和 {@link String#compareTo（String）}以相同的方式执行比较。
      */
     @Override
     public abstract int compareTo(ByteBuf buffer);
