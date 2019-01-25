@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
+ * 从spring-core移植
  * create by @author z.tsinghua at 2018/9/14
  */
 public class ClassPathResource extends AbstractFileResolvingResource {
