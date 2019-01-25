@@ -1,5 +1,7 @@
 package com.freetsinghua.tool.core.other;
 
+import com.freetsinghua.tool.core.other.util.ByteProcessor;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
