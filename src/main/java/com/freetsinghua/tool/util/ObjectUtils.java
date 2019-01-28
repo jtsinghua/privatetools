@@ -6,9 +6,10 @@ import java.lang.reflect.Array;
 
 /**
  * 通用对象工具
+ *
  * <p>nullSafeEquals方法移植自spring-core
- * <p>arrayEquals方法参考Junit的实现
- * create by @author z.tsinghua at 2018/9/15
+ *
+ * <p>arrayEquals方法参考Junit的实现 create by @author z.tsinghua at 2018/9/15
  */
 public class ObjectUtils {
     /**
@@ -25,7 +26,7 @@ public class ObjectUtils {
             if (o1.equals(o2)) {
                 return true;
             } else {
-                //若是数组
+                // 若是数组
                 return (o1.getClass().isArray() && o2.getClass().isArray()) && arrayEquals(o1, o2);
             }
         } else {
@@ -62,14 +63,14 @@ public class ObjectUtils {
         if (o1 == o2) {
             return true;
         }
-        //长度
+        // 长度
         int o1Len = Array.getLength(o1);
         int o2Len = Array.getLength(o2);
-        //若是长度不相等
+        // 若是长度不相等
         if (o1Len != o2Len) {
             return false;
         }
-        //逐个比较
+        // 逐个比较
         for (int i = 0; i < o1Len; i++) {
             Object oi1 = Array.get(o1, i);
             Object oi2 = Array.get(o2, i);
@@ -84,5 +85,22 @@ public class ObjectUtils {
         }
 
         return true;
+    }
+
+    public static int floatCompare(float v1, float v2) {
+        if (v1 - v2 < 1e7) {
+            return 0;
+        }
+
+        if (v1 > v2) {
+            return 1;
+        }
+
+        return -1;
+    }
+
+    /** 判断数组是否为空 */
+    public static boolean isArrayEmpty(Object[] array) {
+        return array == null || array.length == 0;
     }
 }
