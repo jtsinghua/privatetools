@@ -19,4 +19,6 @@ public class CommonConstant {
 
     /** jdk7 */
     public static final float JAVA_VERSION_7 = 1.7f;
+
+    public static final int K = 1024;
 }
