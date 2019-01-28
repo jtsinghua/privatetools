@@ -7,6 +7,11 @@ import java.net.*;
 /** create by @author z.tsinghua at 2018/9/14 */
 public class ResourceUtils {
 
+    private static final String PROTOCOL_FILE = "file";
+    private static final String PROTOCOL_JAR = "jar";
+    private static final String PROTOCOL_ZIP = "zip";
+    private static final String PROTOCOL_WAR = "war";
+
     public static URI toURI(URL url) throws URISyntaxException {
         return toURI(url.toString());
     }
@@ -18,13 +23,13 @@ public class ResourceUtils {
     public static boolean isFileUrl(URL url) {
         String protocol = url.getProtocol();
 
-        return "file".equals(protocol);
+        return PROTOCOL_FILE.equals(protocol);
     }
 
     public static File getFile(URL resourceUrl, String description) throws FileNotFoundException {
         assertNotNull(resourceUrl, "Resource URL must not be null");
 
-        if (!"file".equals(resourceUrl.getProtocol())) {
+        if (!PROTOCOL_FILE.equals(resourceUrl.getProtocol())) {
             throw new FileNotFoundException(
                     description
                             + " cannot be resolved to absolute file path because it does not reside in the file system: "
@@ -47,7 +52,7 @@ public class ResourceUtils {
     public static boolean isJarFile(URL url){
         String protocol = url.getProtocol();
         
-        return "jar".equals(protocol) || "zip".equals(protocol) || "war".equals(protocol);
+        return PROTOCOL_JAR.equals(protocol) || PROTOCOL_ZIP.equals(protocol) || PROTOCOL_WAR.equals(protocol);
     }
     
     public static void useCachesIfNecessary(URLConnection connection){
@@ -59,7 +64,7 @@ public class ResourceUtils {
         int endIndex = urlFile.indexOf("*/");
         if (-1 != endIndex){
             String warFile = urlFile.substring(0, endIndex);
-            if ("war".equals(jarUrl.getProtocol())){
+            if (PROTOCOL_WAR.equals(jarUrl.getProtocol())){
                 return new URL(warFile);
             }
             
