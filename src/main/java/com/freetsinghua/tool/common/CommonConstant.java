@@ -21,4 +21,7 @@ public class CommonConstant {
     public static final float JAVA_VERSION_7 = 1.7f;
 
     public static final int K = 1024;
+
+    /** 内核数目 */
+    public static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
 }
