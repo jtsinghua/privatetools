@@ -1,24 +1,28 @@
 package com.freetsinghua.tool.task;
 
+import java.lang.reflect.UndeclaredThrowableException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.concurrent.*;
+
+import javax.enterprise.concurrent.LastExecution;
+import javax.enterprise.concurrent.ManagedScheduledExecutorService;
+
 import com.freetsinghua.tool.anotation.Nullable;
 import com.freetsinghua.tool.util.Assert;
 import com.freetsinghua.tool.util.ClassUtils;
 
-import javax.enterprise.concurrent.LastExecution;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author z.tsinghua
  * @date 2019/1/29
  */
 public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements TaskScheduler {
+	private static final ErrorHandler LOG_AND_SUPPRESS_ERROR_HANDLER = new LoggingErrorHandler();
+	private static final ErrorHandler LOG_AND_PROPAGATE_ERROR_HANDLER = new PropagatingErrorHandler();
+
 	@Nullable
 	private static Class<?> managedScheduledExecutorServiceClass;
 
@@ -76,6 +80,16 @@ public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements T
 
 	@Override
 	public ScheduledFuture<?> schedule(Runnable task, Trigger trigger) {
+	    try {
+            if (this.enterpriseConcurrentScheduler){
+                return new EnterpriseConcurrentTriggerScheduler().schedule(decorateTask(task, true), trigger);
+            }else{
+                ErrorHandler handler = this.errorHandler != null ? this.errorHandler : getDefaultErrorHandler(true);
+                //TODO:
+            }
+        }catch (RejectedExecutionException ex){
+
+        }
 		return null;
 	}
 
@@ -117,6 +131,74 @@ public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements T
 	@Override
 	public ScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long delay) {
 		return null;
+	}
+
+	private Runnable decorateTask(Runnable task, boolean isRepeatingTask) {
+		Runnable result = decorateTaskWithErrorHandler(task, this.errorHandler, isRepeatingTask);
+		if (this.enterpriseConcurrentScheduler) {
+			result = ManagedTaskBuilder.buildManagedTask(result, task.toString());
+		}
+		return result;
+	}
+
+	private static DelegatingErrorHandlingRunnable decorateTaskWithErrorHandler(Runnable task,
+			@Nullable ErrorHandler errorHandler, boolean isRepeatingTask) {
+
+		if (task instanceof DelegatingErrorHandlingRunnable) {
+			return (DelegatingErrorHandlingRunnable) task;
+		}
+		ErrorHandler eh = (errorHandler != null ? errorHandler : getDefaultErrorHandler(isRepeatingTask));
+		return new DelegatingErrorHandlingRunnable(task, eh);
+	}
+
+	/**
+	 * Return the default {@link ErrorHandler} implementation based on the boolean
+	 * value indicating whether the task will be repeating or not. For repeating tasks
+	 * it will suppress errors, but for one-time tasks it will propagate. In both
+	 * cases, the error will be logged.
+	 */
+	public static ErrorHandler getDefaultErrorHandler(boolean isRepeatingTask) {
+		return (isRepeatingTask ? LOG_AND_SUPPRESS_ERROR_HANDLER : LOG_AND_PROPAGATE_ERROR_HANDLER);
+	}
+
+
+	/**
+	 * An {@link ErrorHandler} implementation that logs the Throwable at error
+	 * level. It does not perform any additional error handling. This can be
+	 * useful when suppression of errors is the intended behavior.
+	 */
+	@Slf4j
+	private static class LoggingErrorHandler implements ErrorHandler {
+		@Override
+		public void handleError(Throwable t) {
+			if (log.isErrorEnabled()) {
+				log.error("Unexpected error occurred in scheduled task.", t);
+			}
+		}
+	}
+
+
+	/**
+	 * An {@link ErrorHandler} implementation that logs the Throwable at error
+	 * level and then propagates it.
+	 */
+	private static class PropagatingErrorHandler extends LoggingErrorHandler {
+
+		@Override
+		public void handleError(Throwable t) {
+			super.handleError(t);
+			rethrowRuntimeException(t);
+		}
+
+		private static void rethrowRuntimeException(Throwable ex) {
+			if (ex instanceof RuntimeException) {
+				throw (RuntimeException) ex;
+			}
+			if (ex instanceof Error) {
+				throw (Error) ex;
+			}
+			throw new UndeclaredThrowableException(ex);
+		}
 	}
 
 	private class EnterpriseConcurrentTriggerScheduler {
