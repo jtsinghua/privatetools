@@ -5,7 +5,7 @@ package com.freetsinghua.tool.task;
  * @date 2019/1/28
  */
 public interface SchedulingTaskExecutor extends AsyncTaskExecutor {
-    default boolean prefersShortLivedTasks() {
-        return true;
-    }
+	default boolean prefersShortLivedTasks() {
+		return true;
+	}
 }

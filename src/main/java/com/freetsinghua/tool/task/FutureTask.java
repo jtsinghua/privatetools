@@ -6,6 +6,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
 /**
+ * 可取消的异步计算
+ *
  * @author z.tsinghua
  * @date 2019/1/28
  */
@@ -68,7 +70,89 @@ public class FutureTask<V> implements RunnableFuture<V> {
     }
 
     @Override
-    public void run() {}
+    public void run() {
+
+        if (this.state != NEW
+                && !UNSAFE.compareAndSwapObject(
+                        this, RUNNER_OFF_SET, null, Thread.currentThread())) {
+            return;
+        }
+
+        try {
+            Callable<V> c = this.callable;
+            if (c != null && this.state == NEW) {
+                V result;
+                boolean ran;
+
+                try {
+                    result = c.call();
+                    ran = true;
+                } catch (Throwable ex) {
+                    result = null;
+                    ran = false;
+                    setExceptional(ex);
+                }
+
+                if (ran) {
+                    set(result);
+                }
+            }
+        } finally {
+            // runner必须为非null，直到状态已经稳定下来，以防止并发调用run（）
+            runner = null;
+            // 在使runner归null后,必须重新读取状态以防止泄漏中断
+            int s = this.state;
+            if (s >= INTERRUPTING) {
+                handlePossibleCancellationInterrupt(s);
+            }
+        }
+    }
+
+    /**
+     * 执行计算而不设置其结果，然后*将此未来重置为初始状态，如果*计算遇到异常或被取消则无法执行此操作。这*设计用于本质上执行*不止一次的任务。
+     *
+     * @return 如果操作成功，则返回{@code true}
+     */
+    protected boolean runAndSet() {
+        if (this.state != NEW
+                && !UNSAFE.compareAndSwapObject(
+                        this, RUNNER_OFF_SET, null, Thread.currentThread())) {
+            return false;
+        }
+
+        boolean ran = false;
+        int s = this.state;
+
+        try {
+
+            Callable<V> c = this.callable;
+            if (c != null && s == NEW) {
+                try {
+                    c.call();
+                    ran = true;
+                } catch (Throwable thx) {
+                    ran = false;
+                    setExceptional(thx);
+                }
+            }
+        } finally {
+            this.runner = null;
+            s = this.state;
+            if (s >= INTERRUPTING) {
+                handlePossibleCancellationInterrupt(s);
+            }
+        }
+
+        return ran && s == NEW;
+    }
+
+    private void handlePossibleCancellationInterrupt(int s) {
+        if (s == INTERRUPTING) {
+            while (this.state == INTERRUPTING) {
+                Thread.yield();
+            }
+        }
+    }
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
@@ -146,17 +230,31 @@ public class FutureTask<V> implements RunnableFuture<V> {
 
     @Override
     public V get() throws InterruptedException, ExecutionException {
-        return null;
+        int s = this.state;
+
+        if (s <= COMPLETING) {
+            awaitDone(false, 0L);
+        }
+
+        return report(s);
     }
 
     @Override
     public V get(long timeout, TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
+        if (unit == null) {
+            throw new NullPointerException("unit must not be null");
+        }
+
         int s = this.state;
+        if (s <= COMPLETING) {
+            s = awaitDone(true, unit.toNanos(timeout));
+            if (s <= COMPLETING) {
+                throw new TimeoutException();
+            }
+        }
 
-        if (s <= COMPLETING) {}
-
-        return null;
+        return report(s);
     }
 
     /**
@@ -225,6 +323,33 @@ public class FutureTask<V> implements RunnableFuture<V> {
                 }
                 break;
             }
+        }
+    }
+
+    /**
+     * 将此future的结果设置为给定值，除非此未来已设置或已取消。
+     *
+     * @param v 值
+     */
+    protected void set(V v) {
+        if (UNSAFE.compareAndSwapObject(this, STATE_OFF_SET, NEW, COMPLETING)) {
+            outCome = v;
+            UNSAFE.putOrderedInt(this, STATE_OFF_SET, NORMAL);
+            finishCompletion();
+        }
+    }
+
+    /**
+     * 导致此未来报告带有给定throwable的{@link ExecutionException} 作为其原因，除非此{@link
+     * java.util.concurrent.Future}已经{@link #set(Object)}或已被取消{@link #cancel(boolean)}。
+     *
+     * @param thr 异常
+     */
+    protected void setExceptional(Throwable thr) {
+        if (UNSAFE.compareAndSwapInt(this, STATE_OFF_SET, NEW, COMPLETING)) {
+            outCome = thr;
+            UNSAFE.putOrderedInt(this, STATE_OFF_SET, EXCEPTIONAL);
+            finishCompletion();
         }
     }
 

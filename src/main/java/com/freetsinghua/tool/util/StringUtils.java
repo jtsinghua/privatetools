@@ -7,6 +7,8 @@ import java.util.*;
 /** create by @author z.tsinghua at 2018/9/14 */
 public class StringUtils {
 
+    public static final String EMPTY_STRING = "";
+
     /** 判断一个字符串{@code str}是否有长度，即非空，若是非空，则返回true，否则返回false */
     public static boolean hasLength(@Nullable String str) {
         return null != str && !str.isEmpty();
