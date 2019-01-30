@@ -1,6 +1,6 @@
 package com.freetsinghua.tool.util;
 
-import com.sun.istack.internal.Nullable;
+import com.freetsinghua.tool.anotation.Nullable;
 
 import java.util.Collection;
 

@@ -35,6 +35,30 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
     private volatile Set<Map.Entry<K, V>> entrySet;
     private final Segment[] segments;
 
+    public ConcurrentReferenceHashMap() {
+        this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, DEFAULT_REFERENCE_TYPE);
+    }
+
+    public ConcurrentReferenceHashMap(final int initialCapacity) {
+        this(initialCapacity, DEFAULT_LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, DEFAULT_REFERENCE_TYPE);
+    }
+
+    public ConcurrentReferenceHashMap(final int initialCapacity, final float loadFactor) {
+        this(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL, DEFAULT_REFERENCE_TYPE);
+    }
+
+    public ConcurrentReferenceHashMap(final int initialCapacity, final int concurrencyLevel) {
+        this(initialCapacity, DEFAULT_LOAD_FACTOR, concurrencyLevel, DEFAULT_REFERENCE_TYPE);
+    }
+
+    public ConcurrentReferenceHashMap(final int initialCapacity, final ReferenceType referenceType) {
+        this(initialCapacity, DEFAULT_LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, referenceType);
+    }
+
+    public ConcurrentReferenceHashMap(final int initialCapacity, final float loadFactor, final int concurrencyLevel) {
+        this(initialCapacity, loadFactor, concurrencyLevel, DEFAULT_REFERENCE_TYPE);
+    }
+
     public ConcurrentReferenceHashMap(
             int initialCapacity, float loadFactor, int concurrencyLevel, ReferenceType referenceType) {
 

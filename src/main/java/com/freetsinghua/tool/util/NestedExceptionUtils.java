@@ -1,6 +1,6 @@
 package com.freetsinghua.tool.util;
 
-import com.sun.istack.internal.Nullable;
+import com.freetsinghua.tool.anotation.Nullable;
 
 /**
  * create by @author z.tsinghua at 2018/9/14
