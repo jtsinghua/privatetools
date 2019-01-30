@@ -3,6 +3,7 @@ package com.freetsinghua.tool.task;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.*;
 
@@ -32,7 +33,7 @@ public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements T
 					"javax.enterprise.concurrent.ManagedScheduledExecutorService",
 					ConcurrentTaskScheduler.class.getClassLoader());
 		} catch (ClassNotFoundException ex) {
-			//
+			// 忽略
 			managedScheduledExecutorServiceClass = null;
 		}
 	}
@@ -80,57 +81,96 @@ public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements T
 
 	@Override
 	public ScheduledFuture<?> schedule(Runnable task, Trigger trigger) {
-	    try {
-            if (this.enterpriseConcurrentScheduler){
-                return new EnterpriseConcurrentTriggerScheduler().schedule(decorateTask(task, true), trigger);
-            }else{
-                ErrorHandler handler = this.errorHandler != null ? this.errorHandler : getDefaultErrorHandler(true);
-                //TODO:
-            }
-        }catch (RejectedExecutionException ex){
-
-        }
-		return null;
+		try {
+			if (this.enterpriseConcurrentScheduler) {
+				return new EnterpriseConcurrentTriggerScheduler().schedule(decorateTask(task, true), trigger);
+			} else {
+				// 重新安排任务运行
+				ErrorHandler handler = this.errorHandler != null ? this.errorHandler : getDefaultErrorHandler(true);
+				return new ReschedulingRunnable(task, trigger, this.scheduledExecutor, handler).schedule();
+			}
+		} catch (RejectedExecutionException ex) {
+			throw new TaskRejectedException("Executor [" + this.scheduledExecutor + "] did not accept task: " + task,
+					ex);
+		}
 	}
 
 	@Override
 	public ScheduledFuture<?> schedule(Runnable task, Date startTime) {
-		return null;
+		long initialDelay = startTime.getTime() - System.currentTimeMillis();
+		try {
+			return this.scheduledExecutor.schedule(decorateTask(task, true), initialDelay, TimeUnit.MILLISECONDS);
+		} catch (RejectedExecutionException ex) {
+			throw new TaskRejectedException("Executor [" + this.scheduledExecutor + "] did not accept task: " + task,
+					ex);
+		}
 	}
 
 	@Override
 	public ScheduledFuture<?> schedule(Runnable task, Instant startTime) {
-		return null;
+		return schedule(task, Date.from(startTime));
 	}
 
 	@Override
 	public ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Date startTime, long period) {
-		return null;
+		long initialDelay = startTime.getTime() - System.currentTimeMillis();
+		try {
+			return this.scheduledExecutor.scheduleAtFixedRate(decorateTask(task, true), initialDelay, period,
+					TimeUnit.MILLISECONDS);
+		} catch (RejectedExecutionException ex) {
+			throw new TaskRejectedException("Executor [" + this.scheduledExecutor + "] did not accept task: " + task,
+					ex);
+		}
 	}
 
 	@Override
 	public ScheduledFuture<?> scheduleAtFixedRate(Runnable task, Duration period) {
-		return null;
+		return this.scheduleAtFixedRate(task, period.get(ChronoUnit.MILLIS));
 	}
 
 	@Override
 	public ScheduledFuture<?> scheduleAtFixedRate(Runnable task, long period) {
-		return null;
+		try {
+			return this.scheduledExecutor.scheduleAtFixedRate(decorateTask(task, true), 0L, period,
+					TimeUnit.MILLISECONDS);
+		} catch (RejectedExecutionException ex) {
+			throw new TaskRejectedException("Executor [" + this.scheduledExecutor + "] did not accept task: " + task,
+					ex);
+		}
 	}
 
 	@Override
 	public ScheduledFuture<?> scheduleWithFixedDelay(Runnable task, Date startTime, long delay) {
-		return null;
+		long initialDelay = startTime.getTime() - System.currentTimeMillis();
+		try {
+			return this.scheduledExecutor.scheduleWithFixedDelay(decorateTask(task, true), initialDelay, delay,
+					TimeUnit.MILLISECONDS);
+		} catch (RejectedExecutionException ex) {
+			throw new TaskRejectedException("Executor [" + this.scheduledExecutor + "] did not accept task: " + task,
+					ex);
+		}
 	}
 
 	@Override
 	public ScheduledFuture<?> scheduleWithFixedDelay(Runnable task, Duration delay) {
-		return null;
+		try {
+			return this.scheduledExecutor.scheduleWithFixedDelay(decorateTask(task, true), 0L,
+					delay.get(ChronoUnit.MILLIS), TimeUnit.MILLISECONDS);
+		} catch (RejectedExecutionException ex) {
+			throw new TaskRejectedException("Executor [" + this.scheduledExecutor + "] did not accept task: " + task,
+					ex);
+		}
 	}
 
 	@Override
 	public ScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long delay) {
-		return null;
+		try {
+			return this.scheduledExecutor.scheduleWithFixedDelay(decorateTask(task, true), 0L, delay,
+					TimeUnit.MILLISECONDS);
+		} catch (RejectedExecutionException ex) {
+			throw new TaskRejectedException("Executor [" + this.scheduledExecutor + "] did not accept task: " + task,
+					ex);
+		}
 	}
 
 	private Runnable decorateTask(Runnable task, boolean isRepeatingTask) {
