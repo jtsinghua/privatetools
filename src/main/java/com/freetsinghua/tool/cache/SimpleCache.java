@@ -42,7 +42,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     public void put(@NotNull K key, @NotNull V value, long expireTime) {
         cache.put(key, value);
         if (mEventListener != null) {
-            ThreadPool.onShot(
+            ThreadPool.getInstance().scheduleWithFixedDelay(
                     () -> {
                         cache.remove(key);
                         mEventListener.onEvent(value);
@@ -55,7 +55,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     public void put(@NotNull K key, @NotNull V value) {
         cache.put(key, value);
         if (mEventListener != null) {
-            ThreadPool.onShot(
+            ThreadPool.getInstance().scheduleWithFixedDelay(
                     () -> {
                         cache.remove(key);
                         mEventListener.onEvent(value);
@@ -65,7 +65,8 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> map) {}
+    public void putAll(Map<? extends K, ? extends V> map) {
+    }
 
     public V get(K key) {
         return cache.get(key);
