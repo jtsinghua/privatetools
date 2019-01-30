@@ -12,6 +12,8 @@ import java.lang.reflect.Array;
  * <p>arrayEquals方法参考Junit的实现 create by @author z.tsinghua at 2018/9/15
  */
 public class ObjectUtils {
+    private static final int INITIAL_HASH = 7;
+    private static final int MULTIPLIER = 31;
     /**
      * 比较两个对象是否相等
      *
@@ -102,5 +104,56 @@ public class ObjectUtils {
     /** 判断数组是否为空 */
     public static boolean isArrayEmpty(Object[] array) {
         return array == null || array.length == 0;
+    }
+
+    public static int nullSafeHashCode(@Nullable Object obj) {
+        if (obj == null) {
+            return 0;
+        }
+        if (obj.getClass().isArray()) {
+            if (obj instanceof Object[]) {
+                return nullSafeHashCode((Object[]) obj);
+            }
+            if (obj instanceof boolean[]) {
+                return nullSafeHashCode((boolean[]) obj);
+            }
+            if (obj instanceof byte[]) {
+                return nullSafeHashCode((byte[]) obj);
+            }
+            if (obj instanceof char[]) {
+                return nullSafeHashCode((char[]) obj);
+            }
+            if (obj instanceof double[]) {
+                return nullSafeHashCode((double[]) obj);
+            }
+            if (obj instanceof float[]) {
+                return nullSafeHashCode((float[]) obj);
+            }
+            if (obj instanceof int[]) {
+                return nullSafeHashCode((int[]) obj);
+            }
+            if (obj instanceof long[]) {
+                return nullSafeHashCode((long[]) obj);
+            }
+            if (obj instanceof short[]) {
+                return nullSafeHashCode((short[]) obj);
+            }
+        }
+        return obj.hashCode();
+    }
+
+    /**
+     * Return a hash code based on the contents of the specified array.
+     * If {@code array} is {@code null}, this method returns 0.
+     */
+    public static int nullSafeHashCode(@Nullable Object[] array) {
+        if (array == null) {
+            return 0;
+        }
+        int hash = INITIAL_HASH;
+        for (Object element : array) {
+            hash = MULTIPLIER * hash + nullSafeHashCode(element);
+        }
+        return hash;
     }
 }
