@@ -131,6 +131,7 @@ public class ConcurrentTaskScheduler extends ConcurrentTaskExecutor implements T
 	@Override
 	public ScheduledFuture<?> scheduleAtFixedRate(Runnable task, long period) {
 		try {
+			Assert.state(period > 0, "Period must greater than 0");
 			return this.scheduledExecutor.scheduleAtFixedRate(decorateTask(task, true), 0L, period,
 					TimeUnit.MILLISECONDS);
 		} catch (RejectedExecutionException ex) {
