@@ -18,8 +18,6 @@ import com.freetsinghua.tool.util.Assert;
 import com.freetsinghua.tool.util.ConcurrentReferenceHashMap;
 
 /**
- *
- *
  * @author z.tsinghua
  * @date 2019/1/30
  */
@@ -68,7 +66,6 @@ public class ThreadPoolTaskExecutor extends ExecutorConfigurationSupport
 	@Override
 	protected ExecutorService initializeExecutor(ThreadFactory threadFactory,
 			RejectedExecutionHandler rejectedExecutionHandler) {
-
 		BlockingQueue<Runnable> queue = createQueue(this.queueCapacity);
 		ThreadPoolExecutor executor;
 		if (this.taskDecorator != null) {
@@ -243,15 +240,11 @@ public class ThreadPoolTaskExecutor extends ExecutorConfigurationSupport
 				return executor.submit(callable);
 			}
 
-			if (task instanceof Runnable) {
-				Runnable runnable = (Runnable) task;
-				return executor.submit(runnable);
-			}
+			Runnable runnable = (Runnable) task;
+			return executor.submit(runnable);
 		} catch (RejectedExecutionException ex) {
 			throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, ex);
 		}
-
-		return null;
 	}
 
 	/**
@@ -268,20 +261,6 @@ public class ThreadPoolTaskExecutor extends ExecutorConfigurationSupport
 		} catch (RejectedExecutionException ex) {
 			throw new TaskRejectedException("Executor [" + executor + "] did not accept task: " + task, ex);
 		}
-	}
-
-	/**
-	 * 运行类型，是callable，还是runnable
-	 */
-	private enum ExecutionType {
-		/**
-		 * runnable
-		 */
-		EXECUTION_TYPE_RUNNABLE,
-		/**
-		 * callable
-		 */
-		EXECUTION_TYPE_CALLABLE
 	}
 
 	private class RunnableOrCallable<T> {
@@ -304,6 +283,17 @@ public class ThreadPoolTaskExecutor extends ExecutorConfigurationSupport
 			}
 
 			return null;
+		}
+	}
+
+	@Override
+	protected void cancelRemainingTask(Runnable task) {
+		super.cancelRemainingTask(task);
+
+		Object original = this.decoratedTaskMap.get(task);
+
+		if (original instanceof Future) {
+			((Future) original).cancel(true);
 		}
 	}
 }
