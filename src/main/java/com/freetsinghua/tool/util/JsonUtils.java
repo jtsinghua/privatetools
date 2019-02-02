@@ -1,11 +1,13 @@
 package com.freetsinghua.tool.util;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.freetsinghua.tool.anotation.Nullable;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * json工具
@@ -28,8 +30,12 @@ public class JsonUtils {
     public static <T> T readObjectFromString(String content, Class<T> clazz) {
         try {
             return objectMapper.readValue(content, clazz);
+        } catch (JsonMappingException | JsonParseException e) {
+            throw new RuntimeException(
+                    "the input JSON structure does not match structure expected for result type (or has other mismatch issues)",
+                    e);
         } catch (IOException e) {
-            return null;
+            throw new RuntimeException("a low-level I/O error", e);
         }
     }
 
@@ -37,29 +43,23 @@ public class JsonUtils {
      * Object转化为json字符串
      *
      * @param obj 要转化的object
-     * @return 返回结果，可能为null
+     * @return 返回结果
      */
-    @Nullable
     public static String writeObjectAsString(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
-            return null;
+            throw new RuntimeException(e);
         }
     }
 
     /**
      * object转化为byte数组
+     *
      * @param obj 要转化的object
-     * @return 返回结果，可能为null
+     * @return 返回结果
      */
-    @Nullable
-    public static byte[] writeObjectAsBytes(Object obj){
-        String objectAsString = writeObjectAsString(obj);
-        if (objectAsString == null || objectAsString.length() == 0){
-            return null;
-        }
-
-        return objectAsString.getBytes(StandardCharsets.UTF_8);
+    public static byte[] writeObjectAsBytes(Object obj) {
+        return writeObjectAsString(obj).getBytes(StandardCharsets.UTF_8);
     }
 }
