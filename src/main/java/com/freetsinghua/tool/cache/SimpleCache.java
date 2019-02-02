@@ -1,11 +1,13 @@
 package com.freetsinghua.tool.cache;
 
 import com.freetsinghua.tool.anotation.NotNull;
+import com.freetsinghua.tool.anotation.Nullable;
 import com.freetsinghua.tool.common.CommonConstant;
 import com.freetsinghua.tool.util.ThreadPool;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,12 +44,15 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     public void put(@NotNull K key, @NotNull V value, long expireTime) {
         cache.put(key, value);
         if (mEventListener != null) {
-            ThreadPool.getInstance().scheduleWithFixedDelay(
-                    () -> {
-                        cache.remove(key);
-                        mEventListener.onEvent(value);
-                    },
-                    expireTime);
+            ThreadPool.getInstance()
+                    .scheduleWithFixedDelay(
+                            () -> {
+                                if (cache.containsKey(key)) {
+                                    cache.remove(key);
+                                    mEventListener.onEvent(value);
+                                }
+                            },
+                            expireTime);
         }
     }
 
@@ -55,18 +60,20 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     public void put(@NotNull K key, @NotNull V value) {
         cache.put(key, value);
         if (mEventListener != null) {
-            ThreadPool.getInstance().scheduleWithFixedDelay(
-                    () -> {
-                        cache.remove(key);
-                        mEventListener.onEvent(value);
-                    },
-                    this.expireTime);
+            ThreadPool.getInstance()
+                    .scheduleWithFixedDelay(
+                            () -> {
+                                if (cache.containsKey(key)) {
+                                    cache.remove(key);
+                                    mEventListener.onEvent(value);
+                                }
+                            },
+                            this.expireTime);
         }
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> map) {
-    }
+    public void putAll(Map<? extends K, ? extends V> map) {}
 
     public V get(K key) {
         return cache.get(key);
@@ -77,8 +84,8 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    @Nullable
     public V getIfPresent(K key) {
-
         if (cache.containsKey(key)) {
             return cache.get(key);
         }
@@ -87,6 +94,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
     }
 
     @Override
+    @Nullable
     public V get(K key, Callable<? extends V> loader) {
 
         if (cache.containsKey(key)) {
@@ -94,13 +102,11 @@ public class SimpleCache<K, V> implements Cache<K, V> {
         }
 
         if (loader != null) {
-            V call = null;
             try {
-                call = loader.call();
+                return loader.call();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return call;
         }
 
         return null;
