@@ -1,16 +1,16 @@
 package com.freetsinghua.tool.core.io;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-
 import com.freetsinghua.tool.anotation.Nullable;
 import com.freetsinghua.tool.util.Assert;
 import com.freetsinghua.tool.util.ClassUtils;
 import com.freetsinghua.tool.util.ObjectUtils;
-import com.freetsinghua.tool.util.ResourceUtils;
 import com.freetsinghua.tool.util.StringUtils;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Objects;
 
 /**
  * 从spring-core移植
@@ -28,7 +28,7 @@ public class ClassPathResource extends AbstractFileResolvingResource {
 	}
 
 	public ClassPathResource(String path, @Nullable ClassLoader classLoader) {
-		ResourceUtils.assertNotNull(path, "Path must not be null");
+		Assert.notNull(path, "Path must not be null");
 		String pathToUse = StringUtils.cleanPath(path);
 		if (pathToUse.startsWith("/")) {
 			pathToUse = pathToUse.substring(1);
@@ -147,6 +147,6 @@ public class ClassPathResource extends AbstractFileResolvingResource {
 
 	@Override
 	public int hashCode() {
-		return this.path.hashCode();
+		return Objects.hashCode(this.path);
 	}
 }
