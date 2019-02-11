@@ -12,6 +12,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.freetsinghua.tool.anotation.Nullable;
 import com.freetsinghua.tool.common.CommonConstant;
 import com.freetsinghua.tool.core.io.ClassPathResource;
 import com.freetsinghua.tool.task.ConcurrentTaskExecutor;
@@ -36,6 +37,7 @@ public final class ThreadPool {
 	 */
 	private static int coreSize;
 
+	@Nullable
 	private static ConcurrentTaskScheduler getScheduler() {
 		try {
 			ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("scheduled-%d").setDaemon(false)
@@ -52,6 +54,7 @@ public final class ThreadPool {
 		coreSize = core;
 	}
 
+	@Nullable
 	private static ConcurrentTaskExecutor getExecutor() {
 		try {
 			ClassPathResource resource = new ClassPathResource("threadpool.properties");
