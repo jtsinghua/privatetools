@@ -5,7 +5,19 @@ import java.io.Externalizable;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import com.freetsinghua.tool.anotation.Nullable;
 
@@ -501,5 +513,35 @@ public class ClassUtils {
 			}
 			throw ex;
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T getPrimitiveWrapperObject(Class<T> type) {
+		String typeName = type.getName();
+		if (typeName.equalsIgnoreCase(Byte.class.getName())) {
+			return (T) new Byte("0");
+		}
+
+		if (typeName.equalsIgnoreCase(Short.class.getName())) {
+			return (T) new Short("0");
+		}
+
+		if (typeName.equalsIgnoreCase(Integer.class.getName())) {
+			return (T) new Integer("0");
+		}
+
+		if (typeName.equalsIgnoreCase(Long.class.getName())) {
+			return (T) new Long(0L);
+		}
+
+		if (typeName.equalsIgnoreCase(Float.class.getName())) {
+			return (T) new Float(0.0f);
+		}
+
+		if (typeName.equalsIgnoreCase(Double.class.getName())) {
+			return (T) new Double(0.0);
+		}
+
+		return null;
 	}
 }
