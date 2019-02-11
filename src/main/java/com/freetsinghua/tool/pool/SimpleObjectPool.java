@@ -9,6 +9,8 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import com.freetsinghua.tool.common.CommonConstant;
+import com.freetsinghua.tool.util.Assert;
+import com.freetsinghua.tool.util.ReflectUtils;
 
 /**
  * 简单对象池，无法配置对象池
@@ -25,9 +27,13 @@ public class SimpleObjectPool<T> implements org.apache.commons.pool2.ObjectPool<
 	 * 持有对象池
 	 */
 	private static final ThreadLocal<SimpleObjectPool<?>> POOL_THREAD_LOCAL = new ThreadLocal<>();
+	private final Class<T> type;
 
-	private SimpleObjectPool(Class<T> type) {
+	public SimpleObjectPool(Class<T> type) {
+		Assert.state(type != null, "Type must not be null");
+
 		GenericObjectPoolConfig<T> objectPoolConfig = new GenericObjectPoolConfig<>();
+		this.type = type;
 		// 最小驱逐空闲时间，默认半小时
 		objectPoolConfig.setMinEvictableIdleTimeMillis(BaseObjectPoolConfig.DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS);
 		objectPoolConfig.setTestOnBorrow(BaseObjectPoolConfig.DEFAULT_TEST_ON_BORROW);
@@ -63,13 +69,26 @@ public class SimpleObjectPool<T> implements org.apache.commons.pool2.ObjectPool<
 	 * @param <T> 对象类型
 	 * @return 返回一个对象池
 	 */
+	@Deprecated
 	@SuppressWarnings("unchecked")
 	public static <T> SimpleObjectPool<T> getInstance(Class<T> type) {
-		if (POOL_THREAD_LOCAL.get() == null) {
+		SimpleObjectPool<?> simpleObjectPool = POOL_THREAD_LOCAL.get();
+		if (simpleObjectPool == null) {
 			POOL_THREAD_LOCAL.set(new SimpleObjectPool<>(type));
+			simpleObjectPool = POOL_THREAD_LOCAL.get();
 		}
 
-		return (SimpleObjectPool<T>) POOL_THREAD_LOCAL.get();
+		if (!simpleObjectPool.getType().getName().equalsIgnoreCase(type.getName())) {
+			POOL_THREAD_LOCAL.remove();
+			POOL_THREAD_LOCAL.set(new SimpleObjectPool<>(type));
+			simpleObjectPool = POOL_THREAD_LOCAL.get();
+		}
+
+		return (SimpleObjectPool<T>) simpleObjectPool;
+	}
+
+	private Class<T> getType() {
+		return type;
 	}
 
 	/**
@@ -117,6 +136,8 @@ public class SimpleObjectPool<T> implements org.apache.commons.pool2.ObjectPool<
 	 */
 	@Override
 	public void returnObject(T obj) throws Exception {
+		// 对象反初始化
+		ReflectUtils.passivate(obj);
 		this.innerObjectPool.returnObject(obj);
 	}
 
