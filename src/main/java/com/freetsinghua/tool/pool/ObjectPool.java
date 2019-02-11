@@ -5,7 +5,7 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 /**
- * 定制对象池
+ * 可定制对象池
  *
  * @author z.tsinghua
  * @date 2019/2/3
