@@ -22,6 +22,9 @@ public class ReflectUtils {
 			Field[] classDeclaredFields = objClass.getDeclaredFields();
 			for (Field field : classDeclaredFields) {
 				String fieldName = field.getName();
+				if (fieldName.contains("serialVersionUID")){
+					continue;
+				}
 				String setterMethodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
 
 				Method setterMethod = objClass.getDeclaredMethod(setterMethodName, field.getType());
