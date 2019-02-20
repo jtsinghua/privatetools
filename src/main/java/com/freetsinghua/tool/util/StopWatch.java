@@ -5,34 +5,35 @@ import com.freetsinghua.tool.anotation.Nullable;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * 简单任务查看工具
  *
+ * @apiNote copy from spring，去掉了没有命名的stopwatch，同时，启动子任务也必须命名，增加自动任务方法
  * @author z.tsinghua
  * @date 2019/2/12
  */
 public class StopWatch {
-
     /** 总的任务id */
     private final String id;
-
+    /** 是否保存子任务信息 */
     private boolean keepTaskList = true;
-
+    /** 子任务列表 */
     private final List<TaskInfo> taskList = new LinkedList<>();
-
     /** 当前任务的启动时间 */
     private long startTimeMillis;
-
-    /** 当前任务的名称，通过start方法设置 */
+    /** 当前子任务的名称，通过start方法设置 */
     @Nullable private String currentTaskName;
-
+    /** 最近的子任务 */
     @Nullable private TaskInfo lastTaskInfo;
-
+    /** 子任务数目 */
     private int taskCount;
-
     /** 所有任务的总运行时间 */
     private long totalTimeMillis;
+    /** 自动任务列表，最多1000个任务 */
+    private Queue<TaskInfo> taskQueue = new LinkedBlockingDeque<>(1000);
 
     /**
      * Construct a new stop watch with the given id. Does not start any task.
@@ -54,21 +55,15 @@ public class StopWatch {
         return this.id;
     }
 
-    /**
-     * Determine whether the TaskInfo array is built over time. Set this to "false" when using a
-     * StopWatch for millions of intervals, or the task info structure will consume excessive
-     * memory. Default is "true".
-     */
+    /** 默认是记录子任务的信息，若是考虑占用内存太大，设置为{@code false} */
     public void setKeepTaskList(boolean keepTaskList) {
         this.keepTaskList = keepTaskList;
     }
 
     /**
-     * Start a named task. The results are undefined if {@link #stop()} or timing methods are called
-     * without invoking this method.
+     * 启动有一个子任务
      *
-     * @param taskName the name of the task to start
-     * @see #stop()
+     * @param taskName 子任务名
      */
     public void start(String taskName) throws IllegalStateException {
         if (this.currentTaskName != null) {
@@ -78,12 +73,7 @@ public class StopWatch {
         this.startTimeMillis = System.currentTimeMillis();
     }
 
-    /**
-     * Stop the current task. The results are undefined if timing methods are called without
-     * invoking at least one pair {@code start()} / {@code stop()} methods.
-     *
-     * @see #start()
-     */
+    /** 停止当前运行的子任务，先调用{{@link #start(String)}}，然后再调用此方法 */
     public void stop() throws IllegalStateException {
         if (this.currentTaskName == null) {
             throw new IllegalStateException("Can't stop StopWatch: it's not running");
@@ -98,27 +88,27 @@ public class StopWatch {
         this.currentTaskName = null;
     }
 
-    /**
-     * Return whether the stop watch is currently running.
-     *
-     * @see #currentTaskName()
-     */
+    /** 返回当前是否有子任务在运行 */
     public boolean isRunning() {
         return (this.currentTaskName != null);
     }
 
     /**
-     * Return the name of the currently running task, if any.
+     * 返回当前子任务的名
      *
-     * @since 4.2.2
-     * @see #isRunning()
+     * @return 若是当前没有子任务在运行，则返回{@code null}，否则返回子任务的名
      */
     @Nullable
     public String currentTaskName() {
         return this.currentTaskName;
     }
 
-    /** Return the time taken by the last task. */
+    /**
+     * 返回最近子任务所花费的时间
+     *
+     * @throws IllegalStateException 若是没有最近的任务记录，则抛出异常
+     * @return 最近子任务花费的时间
+     */
     public long getLastTaskTimeMillis() throws IllegalStateException {
         if (this.lastTaskInfo == null) {
             throw new IllegalStateException("No tasks run: can't get last task interval");
@@ -126,7 +116,12 @@ public class StopWatch {
         return this.lastTaskInfo.getTimeMillis();
     }
 
-    /** Return the name of the last task. */
+    /**
+     * 返回最近子任务的名
+     *
+     * @throws IllegalStateException 若是最近子任务没有记录
+     * @return 最近子任务的名
+     */
     public String getLastTaskName() throws IllegalStateException {
         if (this.lastTaskInfo == null) {
             throw new IllegalStateException("No tasks run: can't get last task name");
@@ -134,7 +129,12 @@ public class StopWatch {
         return this.lastTaskInfo.getTaskName();
     }
 
-    /** Return the last task as a TaskInfo object. */
+    /**
+     * 返回最近的子任务
+     *
+     * @throws IllegalStateException 如果最近子任务没有记录
+     * @return 最近的子任务
+     */
     public TaskInfo getLastTaskInfo() throws IllegalStateException {
         if (this.lastTaskInfo == null) {
             throw new IllegalStateException("No tasks run: can't get last task info");
@@ -142,22 +142,22 @@ public class StopWatch {
         return this.lastTaskInfo;
     }
 
-    /** Return the total time in milliseconds for all tasks. */
+    /** 获取所有子任务的运行时间之和，以毫秒为单位 */
     public long getTotalTimeMillis() {
         return this.totalTimeMillis;
     }
 
-    /** Return the total time in seconds for all tasks. */
+    /** 获取所有子任务的运行时间之和，以秒为单位 */
     public double getTotalTimeSeconds() {
         return this.totalTimeMillis / 1000.0;
     }
 
-    /** Return the number of tasks timed. */
+    /** 返回子任务数目 */
     public int getTaskCount() {
         return this.taskCount;
     }
 
-    /** Return an array of the data for tasks performed. */
+    /** 返回所有子任务 */
     public TaskInfo[] getTaskInfo() {
         if (!this.keepTaskList) {
             throw new UnsupportedOperationException("Task info is not being kept!");
@@ -165,7 +165,7 @@ public class StopWatch {
         return this.taskList.toArray(new TaskInfo[0]);
     }
 
-    /** Return a short description of the total running time. */
+    /** 返回一个简短的描述 */
     public String shortSummary() {
         return "StopWatch '" + getId() + "': running time (millis) = " + getTotalTimeMillis();
     }
@@ -220,16 +220,68 @@ public class StopWatch {
         return sb.toString();
     }
 
+    /**
+     * 创建一个命名的子任务{@code taskName}
+     *
+     * @param taskName 子任务名
+     * @return 返回任务对象
+     */
+    public TaskInfo createTask(String taskName, Runnable task) {
+        return new TaskInfo(taskName, -1L, task);
+    }
+
+    /**
+     * 添加到自动任务列表中
+     *
+     * @param taskInfo 任务
+     */
+    public void addAutoExecuteQueue(TaskInfo taskInfo) {
+        this.taskQueue.add(taskInfo);
+    }
+
+    /**
+     * 重载{{@link #addAutoExecuteQueue(TaskInfo)}}
+     *
+     * @param taskName 子任务名
+     * @param task 具体任务
+     */
+    public void addAutoExecuteQueue(String taskName, Runnable task) {
+        this.taskQueue.add(this.createTask(taskName, task));
+    }
+
+    /** 启动自动任务列表 */
+    public String startAutoExecuteQueue() {
+        if (this.taskQueue.isEmpty()) {
+            return "[Empty task queue]";
+        }
+
+        while (!this.taskQueue.isEmpty()) {
+            TaskInfo taskInfo = this.taskQueue.poll();
+            this.start(taskInfo.taskName);
+            taskInfo.getTask().run();
+            this.stop();
+        }
+
+        return this.prettyPrint();
+    }
+
     /** Inner class to hold data about one task executed within the stop watch. */
     public static final class TaskInfo {
-
+        /** 任务名 */
         private final String taskName;
-
+        /** 花费的时间 */
         private final long timeMillis;
+        /** 具体任务 */
+        @Nullable private final Runnable task;
 
         TaskInfo(String taskName, long timeMillis) {
+            this(taskName, timeMillis, null);
+        }
+
+        TaskInfo(String taskName, long timeMillis, Runnable task) {
             this.taskName = taskName;
             this.timeMillis = timeMillis;
+            this.task = task;
         }
 
         /** Return the name of this task. */
@@ -245,6 +297,11 @@ public class StopWatch {
         /** Return the time in seconds this task took. */
         public double getTimeSeconds() {
             return (this.timeMillis / 1000.0);
+        }
+
+        /** 返回任务 */
+        public Runnable getTask() {
+            return task;
         }
     }
 }

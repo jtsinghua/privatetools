@@ -2,6 +2,7 @@ package com.freetsinghua.tool.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.*;
 
 /** create by @author z.tsinghua at 2018/9/14 */
@@ -26,7 +27,7 @@ public class ResourceUtils {
         return PROTOCOL_FILE.equals(protocol);
     }
 
-    public static File getFile(URL resourceUrl, String description) throws FileNotFoundException {
+    public static File getFile(URL resourceUrl, String description) throws IOException {
         assertNotNull(resourceUrl, "Resource URL must not be null");
 
         if (!PROTOCOL_FILE.equals(resourceUrl.getProtocol())) {

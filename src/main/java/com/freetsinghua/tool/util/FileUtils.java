@@ -1,14 +1,42 @@
 package com.freetsinghua.tool.util;
 
 import com.freetsinghua.tool.anotation.Nullable;
-import com.freetsinghua.tool.core.io.ClassPathResource;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+
+import lombok.extern.slf4j.Slf4j;
 
 /** create by @author z.tsinghua at 2018/9/14 */
+@Slf4j
 public class FileUtils {
 
     private static final String EMPTY_STRING = "";
+
+    /**
+     * 写入文件
+     *
+     * @param content 要写入文件的内容
+     * @param file 文件
+     * @throws IOException io错误
+     */
+    public static void writeCharSequenceToFile(CharSequence content, File file) throws IOException {
+        Assert.state(StringUtils.hasLength(content), "Content must not be null");
+        Assert.state(file != null, "File must not be null");
+        BufferedWriter writer =
+                new BufferedWriter(
+                        new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
+        writer.append(content);
+        writer.flush();
+        writer.close();
+    }
 
     /**
      * read file to string
@@ -17,38 +45,29 @@ public class FileUtils {
      * @return if file exist, return the content of this file
      */
     public static String readFileToString(String path) {
-
-        BufferedReader reader = null;
-
         try {
-            ClassPathResource resource = new ClassPathResource(path);
+            StringBuilder buf = new StringBuilder();
 
-            reader =
+            File file = new File(path);
+            BufferedReader reader =
                     new BufferedReader(
-                            new InputStreamReader(new FileInputStream(resource.getFile())));
-
-            StringBuilder builder = new StringBuilder();
-
+                            new InputStreamReader(
+                                    new FileInputStream(file),
+                                    StandardCharsets.getDefaultCharset()));
             String line;
+            String lineSeparator = SystemUtils.getLineSeparator();
+            if (lineSeparator == null) {
+                lineSeparator = "\n";
+            }
 
             while ((line = reader.readLine()) != null) {
-                builder.append(line);
-                builder.append("\n");
+                buf.append(line).append(lineSeparator);
             }
 
-            return builder.toString();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        } finally {
-            if (null != reader) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            return buf.toString();
+        } catch (IOException e) {
+            log.error("Can't read file: {}", e.getMessage(), e);
         }
-
         return EMPTY_STRING;
     }
 
@@ -145,10 +164,10 @@ public class FileUtils {
      * @throws NullPointerException if the file is null
      */
     public static FileInputStream openInputStream(final File file) throws IOException {
-        if (null == file){
+        if (null == file) {
             throw new NullPointerException("file must not be null");
         }
-        
+
         if (file.exists()) {
             if (file.isDirectory()) {
                 throw new IOException(

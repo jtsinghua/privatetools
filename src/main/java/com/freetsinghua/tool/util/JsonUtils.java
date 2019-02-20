@@ -1,16 +1,14 @@
 package com.freetsinghua.tool.util;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.freetsinghua.tool.anotation.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 /**
- * json工具
+ * json工具,使用jackson
  *
  * @author z.tsinghua
  * @date 2019/1/25
@@ -27,16 +25,14 @@ public class JsonUtils {
      * @return 返回解析结果，可能为null
      */
     @Nullable
-    public static <T> T readObjectFromString(String content, Class<T> clazz) {
+    public static <T> Optional<T> readObjectFromString(String content, Class<T> clazz) {
         try {
-            return objectMapper.readValue(content, clazz);
-        } catch (JsonMappingException | JsonParseException e) {
-            throw new RuntimeException(
-                    "the input JSON structure does not match structure expected for result type (or has other mismatch issues)",
-                    e);
+            T value = objectMapper.readValue(content, clazz);
+            return Optional.of(value);
         } catch (IOException e) {
-            throw new RuntimeException("a low-level I/O error", e);
+            e.printStackTrace();
         }
+        return Optional.empty();
     }
 
     /**
@@ -45,11 +41,28 @@ public class JsonUtils {
      * @param obj 要转化的object
      * @return 返回结果
      */
-    public static String writeObjectAsString(Object obj) {
+    public static Optional<String> writeObjectAsString(Object obj) {
         try {
-            return objectMapper.writeValueAsString(obj);
+            String jsonString = objectMapper.writeValueAsString(obj);
+            return Optional.of(jsonString);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * 优雅的输出json字符串
+     *
+     * @param obj 对象
+     * @return 返回结果
+     */
+    public static Optional<String> writeObjectAsPrettyString(Object obj) {
+        try {
+            String prettyJsonString =
+                    objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+            return Optional.of(prettyJsonString);
+        } catch (JsonProcessingException e) {
+            return Optional.empty();
         }
     }
 
@@ -59,7 +72,20 @@ public class JsonUtils {
      * @param obj 要转化的object
      * @return 返回结果
      */
-    public static byte[] writeObjectAsBytes(Object obj) {
-        return writeObjectAsString(obj).getBytes(StandardCharsets.UTF_8);
+    public static Optional<byte[]> writeObjectAsBytes(Object obj) {
+        Optional<String> stringOptional = writeObjectAsString(obj);
+        if (stringOptional.isPresent()) {
+            String value = stringOptional.get();
+            return Optional.of(value.getBytes(com.freetsinghua.tool.util.StandardCharsets.UTF_8));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 获取{@link ObjectMapper}对象
+     * @return 返回结果
+     */
+    public static ObjectMapper getObjectMapper(){
+        return objectMapper;
     }
 }

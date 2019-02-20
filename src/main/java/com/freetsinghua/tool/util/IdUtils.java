@@ -3,6 +3,7 @@ package com.freetsinghua.tool.util;
 import com.freetsinghua.tool.anotation.Nullable;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 唯一ID
@@ -16,8 +17,14 @@ public class IdUtils {
      *
      * @return an {@link UUID} string
      */
-    public static String generateLocalObjectUuid() {
-        return UUID.randomUUID().toString().replace("-", "");
+    public static String generateLocalObjectUUID() {
+        return UUID.randomUUID().toString();
+    }
+
+    /** 比{{@link #generateLocalObjectUUID()}}有更好的性能 */
+    public static String fastUUID() {
+        ThreadLocalRandom threadLocalRandom = ThreadLocalRandom.current();
+        return new UUID(threadLocalRandom.nextLong(), threadLocalRandom.nextLong()).toString();
     }
 
     /**

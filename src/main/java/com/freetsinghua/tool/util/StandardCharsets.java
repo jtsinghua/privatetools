@@ -36,6 +36,10 @@ public class StandardCharsets {
         CAN_USE = ObjectUtils.floatCompare(v, CommonConstant.JAVA_VERSION_7) >= 0;
     }
 
+    public static Charset getDefaultCharset(){
+        return Charset.defaultCharset();
+    }
+
     private static Charset getUtf16le() {
         return get("UTF-16LE");
     }

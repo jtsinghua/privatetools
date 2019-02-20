@@ -24,6 +24,11 @@ final class FtpConfig {
 
     @Override
     public String toString() {
-        return JsonUtils.writeObjectAsString(this);
+        return "FtpConfig{" +
+                "host='" + host + '\'' +
+                ", port=" + port +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                '}';
     }
 }
