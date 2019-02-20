@@ -47,13 +47,13 @@ public abstract class AbstractResource implements Resource {
     }
 
     @Override
-    public URL getUrl() throws IOException {
+    public URL getURL() throws IOException {
         throw new FileNotFoundException(this.getDescription() + " cannot be resolved to URL");
     }
 
     @Override
     public URI getUri() throws IOException {
-        URL url = this.getUrl();
+        URL url = this.getURL();
 
         try {
             return ResourceUtils.toURI(url);
@@ -63,7 +63,7 @@ public abstract class AbstractResource implements Resource {
     }
 
     @Override
-    public File getFile() throws FileNotFoundException {
+    public File getFile() throws FileNotFoundException, IOException {
         throw new FileNotFoundException(
                 getDescription() + " cannot be resolved to absolute file path");
     }
